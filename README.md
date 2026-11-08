@@ -30,6 +30,18 @@ Restart n8n afterwards. See the
 [n8n community nodes guide](https://docs.n8n.io/integrations/community-nodes/installation/)
 for Docker and queue-mode notes.
 
+
+## Install from GitHub Packages
+
+Releases are also published to [GitHub Packages](https://github.com/saizul/n8n-nodes-bangladesh/pkgs/npm/n8n-nodes-bangladesh) as `@saizul/n8n-nodes-bangladesh`:
+
+```bash
+echo "@saizul:registry=https://npm.pkg.github.com" >> .npmrc
+npm install @saizul/n8n-nodes-bangladesh
+```
+
+GitHub Packages needs a personal access token with `read:packages` in your `~/.npmrc` (`//npm.pkg.github.com/:_authToken=YOUR_TOKEN`).
+
 ## Operations
 
 The node processes every input item separately, keeps the link to the source item

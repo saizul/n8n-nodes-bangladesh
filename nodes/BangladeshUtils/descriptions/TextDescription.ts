@@ -17,6 +17,12 @@ export const textOperations: INodeProperties[] = [
 				action: 'Count Bangla graphemes',
 			},
 			{
+				name: 'Normalize',
+				value: 'normalize',
+				description: 'Apply Unicode NFC and remove zero-width and other invisible characters',
+				action: 'Normalize Bangla text',
+			},
+			{
 				name: 'Slugify (Bangla to Latin)',
 				value: 'slugify',
 				description: 'Make a URL-friendly Latin slug from Bangla text (phonetic, approximate)',
@@ -66,5 +72,22 @@ export const textFields: INodeProperties[] = [
 		default: 0,
 		description: 'Cut the slug to this many characters. 0 means no limit.',
 		displayOptions: { show: { resource: ['text'], operation: ['slugify'] } },
+	},
+	{
+		displayName: 'Keep Joiners (ZWJ/ZWNJ)',
+		name: 'keepJoiners',
+		type: 'boolean',
+		default: true,
+		description:
+			'Whether to keep zero-width joiner and non-joiner, which some Bangla conjuncts need to render correctly',
+		displayOptions: { show: { resource: ['text'], operation: ['normalize'] } },
+	},
+	{
+		displayName: 'Collapse Whitespace',
+		name: 'collapseWhitespace',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to replace runs of whitespace with one space and trim both ends',
+		displayOptions: { show: { resource: ['text'], operation: ['normalize'] } },
 	},
 ];

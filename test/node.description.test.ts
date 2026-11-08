@@ -17,7 +17,7 @@ const operationsByResource: Record<string, string[]> = {
 	phone: ['validate', 'normalize', 'detectOperator', 'mask', 'whatsappLink'],
 	number: ['toWords', 'takaToWords', 'format', 'convertDigits'],
 	date: ['toBanglaDate', 'fromBanglaDate'],
-	text: ['slugify', 'transliterate', 'countGraphemes'],
+	text: ['normalize', 'slugify', 'transliterate', 'countGraphemes'],
 	address: ['listDivisions', 'listDistricts', 'lookupDistrict'],
 };
 

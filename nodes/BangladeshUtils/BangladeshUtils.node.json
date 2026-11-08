@@ -1,0 +1,24 @@
+{
+	"node": "n8n-nodes-bangladesh.bangladeshUtils",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Development", "Utility"],
+	"resources": {
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/saizul/n8n-nodes-bangladesh#readme"
+			}
+		]
+	},
+	"alias": [
+		"bangladesh",
+		"bangla",
+		"bengali",
+		"bd phone",
+		"taka",
+		"bkash",
+		"nagad",
+		"ঢাকা",
+		"বাংলা"
+	]
+}

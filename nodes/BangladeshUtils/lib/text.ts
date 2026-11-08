@@ -96,6 +96,29 @@ export function transliterate(text: string): string {
 	return out;
 }
 
+export interface NormalizeTextOptions {
+	/** Keep ZWJ and ZWNJ, which are meaningful in some Bangla conjuncts (e.g. র‍্য). Default true. */
+	keepJoiners?: boolean;
+	/** Collapse runs of whitespace into one space and trim the ends. Default false. */
+	collapseWhitespace?: boolean;
+}
+
+const INVISIBLE = /[\u200B\u2060\uFEFF\u00AD]/g;
+const JOINERS = /[\u200C\u200D]/g;
+
+/**
+ * Clean pasted Bangla text: Unicode NFC, strip invisible characters (zero-width space, word
+ * joiner, BOM, soft hyphen) and optionally the joiners and extra whitespace.
+ */
+export function normalizeText(text: string, options: NormalizeTextOptions = {}): string {
+	const { keepJoiners = true, collapseWhitespace = false } = options;
+	let out = String(text).replace(INVISIBLE, '');
+	if (!keepJoiners) out = out.replace(JOINERS, '');
+	out = out.normalize('NFC');
+	if (collapseWhitespace) out = out.replace(/\s+/g, ' ').trim();
+	return out;
+}
+
 export interface SlugOptions {
 	separator?: string;
 	/** Maximum slug length, 0 for unlimited. */

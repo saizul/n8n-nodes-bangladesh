@@ -12,6 +12,7 @@ import {
 	maskPhone,
 	numberToWords,
 	parsePhone,
+	normalizeText,
 	slugify,
 	takaToWords,
 	toBanglaDate,
@@ -155,6 +156,14 @@ export function runOperation(
 				maxLength: ctx.getNodeParameter('slugMaxLength', i, 0) as number,
 			});
 			return { input, slug };
+		}
+		case 'text.normalize': {
+			const input = ctx.getNodeParameter('textValue', i, '') as string;
+			const normalized = normalizeText(input, {
+				keepJoiners: ctx.getNodeParameter('keepJoiners', i, true) as boolean,
+				collapseWhitespace: ctx.getNodeParameter('collapseWhitespace', i, false) as boolean,
+			});
+			return { input, normalized, removed: input.length - normalized.length };
 		}
 		case 'text.transliterate': {
 			const input = ctx.getNodeParameter('textValue', i, '') as string;

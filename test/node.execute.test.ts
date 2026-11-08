@@ -137,6 +137,17 @@ describe('execute: successful operations', () => {
 			{ slug: 'amar-sonar-bangla' },
 		],
 		[
+			'text normalize',
+			{
+				resource: 'text',
+				operation: 'normalize',
+				textValue: ' বাংলা\u200Bদেশ  ',
+				keepJoiners: true,
+				collapseWhitespace: true,
+			},
+			{ normalized: 'বাংলাদেশ', removed: 4 },
+		],
+		[
 			'text transliterate',
 			{ resource: 'text', operation: 'transliterate', textValue: 'ঢাকা' },
 			{ transliterated: 'dhaka' },

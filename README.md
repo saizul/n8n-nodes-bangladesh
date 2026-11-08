@@ -37,25 +37,26 @@ The node processes every input item separately, keeps the link to the source ite
 instead of stopping the workflow. Enable **Options > Include Input Fields** to copy the incoming
 fields into the output.
 
-| Resource    | Operation            | What it does                                                                |
-| ----------- | -------------------- | --------------------------------------------------------------------------- |
-| **Phone**   | Validate             | Is it a valid BD mobile number? Returns reason, E.164, operator             |
-|             | Normalize            | `+8801712345678`, `01712345678`, `01712 345678`, `+880 1712 345678`         |
-|             | Detect Operator      | 013/017 Grameenphone, 014/019 Banglalink, 016/018 Robi, 015 Teletalk        |
-|             | Mask                 | `017******78` with configurable visible digits and mask character           |
-|             | WhatsApp Link        | `https://wa.me/8801712345678?text=...`                                      |
-| **Number**  | To Words             | `1234` to "এক হাজার দুইশ চৌত্রিশ" or "One Thousand Two Hundred Thirty Four" |
-|             | Taka Amount in Words | Cheque style with Taka, Paisa and "মাত্র" / "Only"                          |
-|             | Format (Lakh/Crore)  | `1234567.5` to `12,34,567.50`, optional Bangla digits, prefix, suffix       |
-|             | Convert Digits       | `2024` to `২০২৪` and back, inside any text                                  |
-| **Date**    | To Bangla Date       | Gregorian to Bangla calendar with month, weekday and season names           |
-|             | From Bangla Date     | Bangla year, month and day back to the Gregorian date                       |
-| **Text**    | Slugify              | `আমার সোনার বাংলা` to `amar-sonar-bangla`                                   |
-|             | Transliterate        | Phonetic Bangla to Latin text                                               |
-|             | Count Graphemes      | Reader-perceived characters, code points, words                             |
-| **Address** | List Divisions       | The 8 divisions with district counts                                        |
-|             | List Districts       | The 64 districts, optionally for one division                               |
-|             | Lookup District      | District name (English or Bangla) to its division                           |
+| Resource    | Operation            | What it does                                                                     |
+| ----------- | -------------------- | -------------------------------------------------------------------------------- |
+| **Phone**   | Validate             | Is it a valid BD mobile number? Returns reason, E.164, operator                  |
+|             | Normalize            | `+8801712345678`, `01712345678`, `01712 345678`, `+880 1712 345678`              |
+|             | Detect Operator      | 013/017 Grameenphone, 014/019 Banglalink, 016/018 Robi, 015 Teletalk             |
+|             | Mask                 | `017******78` with configurable visible digits and mask character                |
+|             | WhatsApp Link        | `https://wa.me/8801712345678?text=...`                                           |
+| **Number**  | To Words             | `1234` to "এক হাজার দুইশ চৌত্রিশ" or "One Thousand Two Hundred Thirty Four"      |
+|             | Taka Amount in Words | Cheque style with Taka, Paisa and "মাত্র" / "Only"                               |
+|             | Format (Lakh/Crore)  | `1234567.5` to `12,34,567.50`, optional Bangla digits, prefix, suffix            |
+|             | Convert Digits       | `2024` to `২০২৪` and back, inside any text                                       |
+| **Date**    | To Bangla Date       | Gregorian to Bangla calendar with month, weekday and season names                |
+|             | From Bangla Date     | Bangla year, month and day back to the Gregorian date                            |
+| **Text**    | Normalize            | Unicode NFC, strip zero-width/invisible characters, optional whitespace collapse |
+|             | Slugify              | `আমার সোনার বাংলা` to `amar-sonar-bangla`                                        |
+|             | Transliterate        | Phonetic Bangla to Latin text                                                    |
+|             | Count Graphemes      | Reader-perceived characters, code points, words                                  |
+| **Address** | List Divisions       | The 8 divisions with district counts                                             |
+|             | List Districts       | The 64 districts, optionally for one division                                    |
+|             | Lookup District      | District name (English or Bangla) to its division                                |
 
 All operations accept Bangla digits (০-৯) in their inputs where numbers are expected.
 

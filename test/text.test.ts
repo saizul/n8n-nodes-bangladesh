@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { countText, slugify, splitGraphemes, transliterate } from '../nodes/BangladeshUtils/lib';
+import {
+	countText,
+	normalizeText,
+	slugify,
+	splitGraphemes,
+	transliterate,
+} from '../nodes/BangladeshUtils/lib';
 
 describe('transliterate', () => {
 	it.each([
@@ -116,5 +122,27 @@ describe('splitGraphemes and countText', () => {
 
 	it('handles empty text', () => {
 		expect(countText('')).toMatchObject({ graphemes: 0, words: 0, codePoints: 0 });
+	});
+});
+
+describe('normalizeText', () => {
+	it('removes zero-width space, BOM, word joiner and soft hyphen', () => {
+		expect(normalizeText('\uFEFFবা\u200Bং\u2060লা\u00AD')).toBe('বাংলা');
+	});
+	it('composes split vowel signs to NFC', () => {
+		expect(normalizeText('\u09C7\u09BE')).toBe('\u09CB');
+	});
+	it('keeps ZWJ/ZWNJ by default and strips them on request', () => {
+		const withJoiner = 'র\u200D্য';
+		expect(normalizeText(withJoiner)).toBe(withJoiner);
+		expect(normalizeText(withJoiner, { keepJoiners: false })).toBe('র্য');
+	});
+	it('collapses whitespace only when asked', () => {
+		expect(normalizeText('  আমি   ভাত ')).toBe('  আমি   ভাত ');
+		expect(normalizeText('  আমি \n ভাত ', { collapseWhitespace: true })).toBe('আমি ভাত');
+	});
+	it('is idempotent', () => {
+		const once = normalizeText('x\u200By\u09A1\u09BC', { keepJoiners: false });
+		expect(normalizeText(once, { keepJoiners: false })).toBe(once);
 	});
 });

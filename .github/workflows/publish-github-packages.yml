@@ -27,6 +27,7 @@ jobs:
           npm pkg set name="@saizul/n8n-nodes-bangladesh"
           npm pkg set publishConfig.registry="https://npm.pkg.github.com"
           npm pkg set repository.url="git+https://github.com/saizul/n8n-nodes-bangladesh.git"
-      - run: npm publish
+      # build, lint and tests already ran above and in CI; skip prepublishOnly, whose tests assert the unscoped npm name
+      - run: npm publish --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

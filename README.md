@@ -30,7 +30,6 @@ Restart n8n afterwards. See the
 [n8n community nodes guide](https://docs.n8n.io/integrations/community-nodes/installation/)
 for Docker and queue-mode notes.
 
-
 ## Install from GitHub Packages
 
 Releases are also published to [GitHub Packages](https://github.com/saizul/n8n-nodes-bangladesh/pkgs/npm/n8n-nodes-bangladesh) as `@saizul/n8n-nodes-bangladesh`:

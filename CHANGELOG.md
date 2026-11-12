@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Phone: **Extract From Text** operation. Finds every Bangladeshi mobile number in free text
+  (English or Bangla digits, any common spelling), with the original match and offset, operator,
+  output format choice, duplicate removal, operator filter and one-item-per-number output.
 - Text: **Normalize** operation (Unicode NFC, remove zero-width characters, optional ZWJ/ZWNJ removal and whitespace collapse).
 
 ## [0.1.0] - 2026-11-08

@@ -170,3 +170,130 @@ export function whatsappLink(raw: unknown, message?: string): string {
 	const base = `https://wa.me/${formatPhone(raw, 'digitsOnly')}`;
 	return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
+
+export interface ExtractedPhone {
+	/** The number exactly as it appears in the text. */
+	match: string;
+	/** Offset of the match in the text (UTF-16 code units, like String.prototype.indexOf). */
+	index: number;
+	/** National number with the trunk zero, for example 01712345678. */
+	local: string;
+	/** The number in the requested output format. */
+	number: string;
+	operator: Operator;
+}
+
+export interface ExtractOptions {
+	/** Output format of the `number` field (default "e164"). */
+	format?: PhoneFormat;
+	/** Keep only the first occurrence of every number (default true). */
+	unique?: boolean;
+	/** Only return numbers whose prefix is in this list, for example ["017", "013"]. */
+	prefixes?: readonly string[];
+}
+
+/**
+ * A digit group: an optional "+" and "(", a digit, then digits and the in-number separators
+ * "-", ".", "(" and ")". Groups are joined by spaces or tabs, never by line breaks.
+ */
+const SEGMENT = String.raw`\+?\(?\d[\d().\-]*`;
+const CANDIDATE_PATTERN = new RegExp(
+	String.raw`(?<![A-Za-z0-9+])${SEGMENT}(?:[ \t\u00a0]+${SEGMENT})*`,
+	'g',
+);
+const SEGMENT_PATTERN = new RegExp(SEGMENT, 'g');
+/** The longest valid spelling is "+880 1712 345 678" style: at most six groups. */
+const MAX_SEGMENTS = 6;
+
+/**
+ * Find every Bangladeshi mobile number in free text, for example an SMS, an email body or a
+ * chat message. All spellings accepted by parsePhone are recognised, in English or Bangla
+ * digits, and numbers that sit next to each other are split correctly.
+ */
+export function extractPhones(raw: unknown, options: ExtractOptions = {}): ExtractedPhone[] {
+	const { format = 'e164', unique = true, prefixes } = options;
+	const text = raw === null || raw === undefined ? '' : String(raw);
+	// Bangla digits are single UTF-16 code units, so offsets stay the same after conversion.
+	const ascii = toEnglishDigits(text);
+	const allowed = prefixes && prefixes.length > 0 ? new Set(prefixes.map(normalizePrefix)) : null;
+	const seen = new Set<string>();
+	const found: ExtractedPhone[] = [];
+
+	for (const candidate of ascii.matchAll(CANDIDATE_PATTERN)) {
+		const start = candidate.index;
+		const segments = [...candidate[0].matchAll(SEGMENT_PATTERN)].map((segment) => ({
+			start: start + segment.index,
+			end: start + segment.index + segment[0].length,
+		}));
+
+		let s = 0;
+		while (s < segments.length) {
+			let matched = false;
+			// Prefer the longest run of groups that forms a valid number.
+			const last = Math.min(segments.length, s + MAX_SEGMENTS) - 1;
+			for (let e = last; e >= s; e--) {
+				const [from, to] = trimMatch(ascii, segments[s].start, segments[e].end);
+				const parsed = parsePhone(ascii.slice(from, to));
+				if (!parsed.valid || parsed.national === null || parsed.operator === null) continue;
+
+				matched = true;
+				s = e + 1;
+				if (allowed && !allowed.has(parsed.operator.prefix)) break;
+				if (unique && seen.has(parsed.national)) break;
+				seen.add(parsed.national);
+				found.push({
+					match: text.slice(from, to),
+					index: from,
+					local: parsed.national,
+					number: formatPhone(parsed.national, format),
+					operator: parsed.operator,
+				});
+				break;
+			}
+			if (!matched) s += 1;
+		}
+	}
+	return found;
+}
+
+/**
+ * Drop sentence punctuation and dangling separators at the end of a match, and a bracket that
+ * belongs to the surrounding text, as in "(call 01712345678)".
+ */
+function trimMatch(text: string, from: number, to: number): [number, number] {
+	let start = from;
+	let end = to;
+	const count = (char: string) => text.slice(start, end).split(char).length - 1;
+	for (;;) {
+		const before = [start, end];
+		while (end > start && /[.\-(]/.test(text[end - 1])) end -= 1;
+		if (text[end - 1] === ')' && count(')') > count('(')) end -= 1;
+		if (text[start] === '(' && count('(') > count(')')) start += 1;
+		if (
+			text[start] === '(' &&
+			text[end - 1] === ')' &&
+			isBalanced(text.slice(start + 1, end - 1))
+		) {
+			start += 1;
+			end -= 1;
+		}
+		if (before[0] === start && before[1] === end) return [start, end];
+	}
+}
+
+/** Whether every ")" closes an earlier "(" and every "(" is closed. */
+function isBalanced(value: string): boolean {
+	let depth = 0;
+	for (const char of value) {
+		if (char === '(') depth += 1;
+		else if (char === ')' && --depth < 0) return false;
+	}
+	return depth === 0;
+}
+
+function normalizePrefix(prefix: string): string {
+	const digits = toEnglishDigits(prefix).replace(/\D/g, '');
+	if (digits.length === 2) return `0${digits}`;
+	if (digits.length === 5 && digits.startsWith('880')) return `0${digits.slice(3)}`;
+	return digits;
+}

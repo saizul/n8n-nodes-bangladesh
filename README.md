@@ -54,6 +54,7 @@ fields into the output.
 | **Phone**   | Validate             | Is it a valid BD mobile number? Returns reason, E.164, operator                  |
 |             | Normalize            | `+8801712345678`, `01712345678`, `01712 345678`, `+880 1712 345678`              |
 |             | Detect Operator      | 013/017 Grameenphone, 014/019 Banglalink, 016/018 Robi, 015 Teletalk             |
+|             | Extract From Text    | Every BD mobile number in an SMS, email or note, deduplicated, operator filter   |
 |             | Mask                 | `017******78` with configurable visible digits and mask character                |
 |             | WhatsApp Link        | `https://wa.me/8801712345678?text=...`                                           |
 | **Number**  | To Words             | `1234` to "এক হাজার দুইশ চৌত্রিশ" or "One Thousand Two Hundred Thirty Four"      |
@@ -79,6 +80,13 @@ All operations accept Bangla digits (০-৯) in their inputs where numbers are 
   and the same in Bangla digits. Validate returns `valid: false` with a `reason`
   (`empty`, `invalid_characters`, `invalid_length`, `invalid_prefix`) instead of failing; the other
   phone operations raise an error for invalid numbers, which Continue On Fail can catch.
+- **Extract From Text** finds every mobile number in free text, in any of the spellings above and
+  in Bangla digits. Groups split by spaces are joined when they form one number
+  (`+880 1712 345 678`), numbers that only have a space between them are kept apart, and line
+  breaks always end a number. Digits glued to letters (`INV01712345678`) or part of a longer
+  number are ignored. Each result has the formatted `number`, the `local` number, the original
+  `match`, its `index` in the text and the operator. Duplicates are removed by default, even when
+  written differently, and an operator filter keeps only the brands you need.
 - **Operator detection uses the prefix.** Numbers ported between operators (MNP) keep their old
   prefix, so the result is the original operator.
 - **Numbers are read as text**, so large values and decimals never suffer floating-point errors.
@@ -117,6 +125,42 @@ Phone > Validate, **Phone Number** = `{{ $json.mobile }}`:
 Then add an **IF** node on `{{ $json.valid }}` and send valid numbers to your SMS or
 WhatsApp step. Phone > WhatsApp Link gives you
 `https://wa.me/8801712345678?text=Your%20order%20is%20ready`.
+
+### Collect the numbers from incoming messages
+
+Input item: `{ "body": "Rahim 01712-345678, Karim +৮৮০ ১৯১২ ৩৪৫৬৭৮, again 01712345678" }`
+
+Phone > Extract From Text, **Text** = `{{ $json.body }}`:
+
+```json
+{
+	"count": 2,
+	"numbers": ["+8801712345678", "+8801912345678"],
+	"format": "e164",
+	"results": [
+		{
+			"number": "+8801712345678",
+			"local": "01712345678",
+			"match": "01712-345678",
+			"index": 6,
+			"operator": "Grameenphone",
+			"operatorBn": "গ্রামীণফোন",
+			"operatorShortName": "GP"
+		},
+		{
+			"number": "+8801912345678",
+			"local": "01912345678",
+			"match": "+৮৮০ ১৯১২ ৩৪৫৬৭৮",
+			"index": 26,
+			"operator": "Banglalink",
+			"operatorBn": "বাংলালিংক",
+			"operatorShortName": "BL"
+		}
+	]
+}
+```
+
+Set **Output** to One Item per Number to send each number on to an SMS or CRM step.
 
 ### Amount in words for an invoice or cheque
 
@@ -192,7 +236,8 @@ Case, spacing and common older spellings (Comilla, Chittagong, Jessore, Bogra, B
 ### কী কী করা যায়
 
 - **ফোন নম্বর:** যাচাই, `+৮৮০` বা `০১৭…` ফরম্যাটে রূপান্তর, অপারেটর শনাক্ত (গ্রামীণফোন, বাংলালিংক,
-  রবি, টেলিটক), মাঝের অংশ লুকানো এবং হোয়াটসঅ্যাপ লিংক। বাংলা অঙ্কে লেখা নম্বরও চলে।
+  রবি, টেলিটক), মাঝের অংশ লুকানো, হোয়াটসঅ্যাপ লিংক এবং যেকোনো লেখা (এসএমএস, ইমেইল) থেকে সব মোবাইল নম্বর
+  বের করা। বাংলা অঙ্কে লেখা নম্বরও চলে।
 - **সংখ্যা:** সংখ্যা থেকে বাংলা বা ইংরেজি কথায় রূপ (যেমন ১২৩৪ থেকে "এক হাজার দুইশ চৌত্রিশ"),
   টাকার অঙ্ক কথায় ("... টাকা ... পয়সা মাত্র"), লক্ষ-কোটি হিসাবে কমা বসানো (১২,৩৪,৫৬৭) এবং
   বাংলা ও ইংরেজি অঙ্কের মধ্যে রূপান্তর।

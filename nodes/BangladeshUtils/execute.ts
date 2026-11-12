@@ -4,6 +4,7 @@ import {
 	banglaToGregorian,
 	countText,
 	detectOperator,
+	extractPhones,
 	formatNumber,
 	formatPhone,
 	listDistricts,
@@ -13,6 +14,7 @@ import {
 	numberToWords,
 	parsePhone,
 	normalizeText,
+	OPERATORS,
 	slugify,
 	takaToWords,
 	toBanglaDate,
@@ -27,6 +29,10 @@ export type OperationResult = IDataObject | IDataObject[];
 
 function listResult(items: IDataObject[], mode: string): OperationResult {
 	return mode === 'single' ? { count: items.length, results: items } : items;
+}
+
+function isKnownOperator(name: string): boolean {
+	return Object.values(OPERATORS).some((operator) => operator.name === name);
 }
 
 /** Run one operation for one input item. Pure library calls only, no network access. */
@@ -67,6 +73,32 @@ export function runOperation(
 				operatorBn: operator.nameBn,
 				operatorShortName: operator.shortName,
 			};
+		}
+		case 'phone.extract': {
+			const text = ctx.getNodeParameter('phoneText', i, '') as string;
+			const format = ctx.getNodeParameter('phoneFormat', i, 'e164') as PhoneFormat;
+			const operators = ctx.getNodeParameter('operatorFilter', i, []) as string[];
+			const mode = ctx.getNodeParameter('extractOutput', i, 'single') as string;
+			const unknown = operators.filter((name) => !isKnownOperator(name));
+			if (unknown.length > 0) throw new Error(`Unknown operator filter: ${unknown.join(', ')}`);
+			const found = extractPhones(text, {
+				format,
+				unique: ctx.getNodeParameter('uniqueNumbers', i, true) as boolean,
+				prefixes: Object.values(OPERATORS)
+					.filter((operator) => operators.includes(operator.name))
+					.map((operator) => operator.prefix),
+			});
+			const results: IDataObject[] = found.map((phone) => ({
+				number: phone.number,
+				local: phone.local,
+				match: phone.match,
+				index: phone.index,
+				operator: phone.operator.name,
+				operatorBn: phone.operator.nameBn,
+				operatorShortName: phone.operator.shortName,
+			}));
+			if (mode === 'items') return results;
+			return { count: results.length, numbers: results.map((r) => r.number), format, results };
 		}
 		case 'phone.mask': {
 			const input = ctx.getNodeParameter('phoneNumber', i, '') as string;

@@ -14,7 +14,7 @@ const properties = bangladeshUtilsDescription.properties;
 const nodeDir = join(root, 'nodes', 'BangladeshUtils');
 
 const operationsByResource: Record<string, string[]> = {
-	phone: ['validate', 'normalize', 'detectOperator', 'mask', 'whatsappLink'],
+	phone: ['validate', 'normalize', 'detectOperator', 'extract', 'mask', 'whatsappLink'],
 	number: ['toWords', 'takaToWords', 'format', 'convertDigits'],
 	date: ['toBanglaDate', 'fromBanglaDate'],
 	text: ['normalize', 'slugify', 'transliterate', 'countGraphemes'],
@@ -132,6 +132,7 @@ describe('node description', () => {
 	it('requires the main input parameter of every operation', () => {
 		const required = [
 			'phoneNumber',
+			'phoneText',
 			'numberValue',
 			'digitText',
 			'textValue',

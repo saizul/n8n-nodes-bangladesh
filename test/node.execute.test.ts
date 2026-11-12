@@ -211,6 +211,68 @@ describe('execute: lists', () => {
 	});
 });
 
+describe('execute: phone extract', () => {
+	const text = 'Rahim 01712-345678, Karim +880 1912 345678, again 01712345678';
+
+	it('returns one item with all numbers by default', async () => {
+		const out = await run({ resource: 'phone', operation: 'extract', phoneText: text });
+		expect(out).toHaveLength(1);
+		expect(out[0].json).toMatchObject({
+			count: 2,
+			numbers: ['+8801712345678', '+8801912345678'],
+			format: 'e164',
+		});
+		expect((out[0].json.results as IDataObject[])[1]).toMatchObject({
+			local: '01912345678',
+			match: '+880 1912 345678',
+			operator: 'Banglalink',
+			operatorBn: 'বাংলালিংক',
+			operatorShortName: 'BL',
+		});
+	});
+
+	it('can return one item per number, paired with the input', async () => {
+		const out = await run({
+			resource: 'phone',
+			operation: 'extract',
+			phoneText: text,
+			extractOutput: 'items',
+			uniqueNumbers: false,
+			phoneFormat: 'local',
+		});
+		expect(out.map((o) => o.json.number)).toEqual(['01712345678', '01912345678', '01712345678']);
+		expect(out.every((o) => (o.pairedItem as { item: number }).item === 0)).toBe(true);
+	});
+
+	it('filters by operator', async () => {
+		const out = await run({
+			resource: 'phone',
+			operation: 'extract',
+			phoneText: text,
+			operatorFilter: ['Banglalink'],
+		});
+		expect(out[0].json.numbers).toEqual(['+8801912345678']);
+	});
+
+	it('reports zero matches instead of failing', async () => {
+		const out = await run({ resource: 'phone', operation: 'extract', phoneText: 'nothing' });
+		expect(out[0].json).toMatchObject({ count: 0, numbers: [], results: [] });
+		const items = await run({
+			resource: 'phone',
+			operation: 'extract',
+			phoneText: 'nothing',
+			extractOutput: 'items',
+		});
+		expect(items).toEqual([]);
+	});
+
+	it('rejects an unknown operator filter', async () => {
+		await expect(
+			run({ resource: 'phone', operation: 'extract', phoneText: text, operatorFilter: ['Airtel'] }),
+		).rejects.toThrow(/Unknown operator filter: Airtel/);
+	});
+});
+
 describe('execute: item handling', () => {
 	it('keeps input fields only when asked', async () => {
 		const params = { resource: 'phone', operation: 'mask', phoneNumber: '01712345678' };

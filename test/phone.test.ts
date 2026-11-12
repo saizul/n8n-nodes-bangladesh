@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	detectOperator,
+	extractPhones,
 	formatPhone,
 	isValidPhone,
 	maskPhone,
@@ -195,5 +196,115 @@ describe('whatsappLink', () => {
 
 	it('throws for an invalid number', () => {
 		expect(() => whatsappLink('999')).toThrow();
+	});
+});
+
+describe('extractPhones', () => {
+	const locals = (text: string, options = {}) => extractPhones(text, options).map((p) => p.local);
+
+	it('finds numbers in every common spelling', () => {
+		const text =
+			'Call 01712345678, +880 1812-345678 or 008801912345678. WhatsApp: +৮৮০ ১৫১২-৩৪৫৬৭৮ and (016) 1234-5678';
+		expect(locals(text)).toEqual([
+			'01712345678',
+			'01812345678',
+			'01912345678',
+			'01512345678',
+			'01612345678',
+		]);
+	});
+
+	it('reports the original match and its offset', () => {
+		const text = 'নম্বর: ০১৭১২-৩৪৫৬৭৮।';
+		const [phone] = extractPhones(text);
+		expect(phone.match).toBe('০১৭১২-৩৪৫৬৭৮');
+		expect(phone.index).toBe(text.indexOf('০১৭'));
+		expect(phone.number).toBe('+8801712345678');
+		expect(phone.operator.name).toBe('Grameenphone');
+	});
+
+	it('splits numbers that are only separated by a space', () => {
+		expect(locals('01712345678 01812345678 01912 345678')).toEqual([
+			'01712345678',
+			'01812345678',
+			'01912345678',
+		]);
+	});
+
+	it('does not glue unrelated digits onto a number', () => {
+		const [phone] = extractPhones('Order 2024 01712345678 50 pcs');
+		expect(phone.match).toBe('01712345678');
+		expect(phone.index).toBe(11);
+	});
+
+	it('keeps groups across spaces when they form one number', () => {
+		const [phone] = extractPhones('Hotline: +880 1712 345 678 (24/7)');
+		expect(phone.match).toBe('+880 1712 345 678');
+		expect(phone.local).toBe('01712345678');
+	});
+
+	it('trims sentence punctuation and surrounding brackets', () => {
+		expect(extractPhones('(call 01712345678).')[0].match).toBe('01712345678');
+		expect(extractPhones('Ring 01712-345678-.')[0].match).toBe('01712-345678');
+		expect(extractPhones('(017) 1234-5678')[0].match).toBe('(017) 1234-5678');
+		expect(extractPhones('(01712345678)')[0].match).toBe('01712345678');
+	});
+
+	it('accepts non-breaking spaces between groups, as pasted from web pages', () => {
+		expect(extractPhones('Tel: 01712\u00a0345678')[0].local).toBe('01712345678');
+	});
+
+	it('does not join numbers across line breaks', () => {
+		expect(locals('Name: Rahim 017\n12345678')).toEqual([]);
+		expect(locals('01712345678\n01812345678')).toEqual(['01712345678', '01812345678']);
+	});
+
+	it('ignores digits inside codes, IDs and longer numbers', () => {
+		expect(locals('Invoice INV01712345678')).toEqual([]);
+		expect(locals('Account 0171234567890')).toEqual([]);
+		expect(locals('Landline 02-9123456, card 4111 1111 1111 1111')).toEqual([]);
+		expect(locals('Wrong prefix 01212345678')).toEqual([]);
+	});
+
+	it('removes duplicates by default, even when written differently', () => {
+		const text = '01712345678 / +8801712345678 / ০১৭১২৩৪৫৬৭৮';
+		expect(locals(text)).toEqual(['01712345678']);
+		expect(locals(text, { unique: false })).toEqual(['01712345678', '01712345678', '01712345678']);
+	});
+
+	it('formats the number field', () => {
+		const text = 'Call 01712345678';
+		expect(extractPhones(text, { format: 'local' })[0].number).toBe('01712345678');
+		expect(extractPhones(text, { format: 'international' })[0].number).toBe('+880 1712 345678');
+		expect(extractPhones(text, { format: 'digitsOnly' })[0].number).toBe('8801712345678');
+	});
+
+	it('filters by prefix in any spelling', () => {
+		const text = '01712345678 01812345678 01312345678 01912345678';
+		expect(locals(text, { prefixes: ['017', '013'] })).toEqual(['01712345678', '01312345678']);
+		expect(locals(text, { prefixes: ['18'] })).toEqual(['01812345678']);
+		expect(locals(text, { prefixes: ['০১৯'] })).toEqual(['01912345678']);
+		expect(locals(text, { prefixes: [] })).toHaveLength(4);
+	});
+
+	it('does not count a filtered number as a duplicate', () => {
+		expect(locals('01812345678 01712345678', { prefixes: ['017'] })).toEqual(['01712345678']);
+	});
+
+	it('returns an empty list for empty or number-free input', () => {
+		expect(extractPhones('')).toEqual([]);
+		expect(extractPhones(null)).toEqual([]);
+		expect(extractPhones(undefined)).toEqual([]);
+		expect(extractPhones('No phone here, just 42 apples.')).toEqual([]);
+	});
+
+	it('handles a large text quickly', () => {
+		const text = Array.from(
+			{ length: 2000 },
+			(_, n) => `Row ${n}: 017${String(n).padStart(8, '0')} 2024 12 31`,
+		).join('\n');
+		const started = Date.now();
+		expect(extractPhones(text)).toHaveLength(2000);
+		expect(Date.now() - started).toBeLessThan(2000);
 	});
 });

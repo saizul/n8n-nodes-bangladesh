@@ -28,6 +28,13 @@ export const numberOperations: INodeProperties[] = [
 				action: 'Format a number with lakh and crore grouping',
 			},
 			{
+				name: 'Parse Amount',
+				value: 'parseAmount',
+				description:
+					'Read an amount written as ৳১,২৫,০০০/-, 1.5 lakh, ২ কোটি or fully in Bangla or English words back into a number',
+				action: 'Parse an amount from text or words',
+			},
+			{
 				name: 'Taka Amount in Words',
 				value: 'takaToWords',
 				description: 'Write an amount as on a cheque, with Taka, Paisa and মাত্র / Only',
@@ -57,6 +64,17 @@ export const numberFields: INodeProperties[] = [
 		displayOptions: {
 			show: { resource: ['number'], operation: ['toWords', 'takaToWords', 'format'] },
 		},
+	},
+	{
+		displayName: 'Amount',
+		name: 'amountText',
+		type: 'string',
+		default: '',
+		required: true,
+		placeholder: 'এক লক্ষ পঁচিশ হাজার টাকা মাত্র',
+		description:
+			'The amount as written: digits (Bangla or English) with ৳, Tk, BDT or /-, scale words such as thousand, lakh, crore, হাজার, লক্ষ, কোটি, or the whole amount in words with Taka and Paisa',
+		displayOptions: { show: { resource: ['number'], operation: ['parseAmount'] } },
 	},
 	{
 		displayName: 'Language',

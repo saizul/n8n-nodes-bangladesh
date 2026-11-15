@@ -15,7 +15,7 @@ const nodeDir = join(root, 'nodes', 'BangladeshUtils');
 
 const operationsByResource: Record<string, string[]> = {
 	phone: ['validate', 'normalize', 'detectOperator', 'extract', 'mask', 'whatsappLink'],
-	number: ['toWords', 'takaToWords', 'format', 'convertDigits'],
+	number: ['toWords', 'takaToWords', 'parseAmount', 'format', 'convertDigits'],
 	date: ['toBanglaDate', 'fromBanglaDate'],
 	text: ['normalize', 'slugify', 'transliterate', 'countGraphemes'],
 	address: ['listDivisions', 'listDistricts', 'lookupDistrict'],

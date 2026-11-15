@@ -70,7 +70,7 @@ export function roundDecimal(value: Decimal, places: number): Decimal {
 // ---------------------------------------------------------------------------
 
 // prettier-ignore
-const BN_UNDER_100 = [
+export const BN_UNDER_100 = [
 	'শূন্য', 'এক', 'দুই', 'তিন', 'চার', 'পাঁচ', 'ছয়', 'সাত', 'আট', 'নয়',
 	'দশ', 'এগারো', 'বারো', 'তেরো', 'চৌদ্দ', 'পনেরো', 'ষোল', 'সতেরো', 'আঠারো', 'উনিশ',
 	'বিশ', 'একুশ', 'বাইশ', 'তেইশ', 'চব্বিশ', 'পঁচিশ', 'ছাব্বিশ', 'সাতাশ', 'আটাশ', 'ঊনত্রিশ',
@@ -83,7 +83,18 @@ const BN_UNDER_100 = [
 	'নব্বই', 'একানব্বই', 'বিরানব্বই', 'তিরানব্বই', 'চুরানব্বই', 'পঁচানব্বই', 'ছিয়ানব্বই', 'সাতানব্বই', 'আটানব্বই', 'নিরানব্বই',
 ];
 
-const BN_HUNDREDS = ['', 'একশ', 'দুইশ', 'তিনশ', 'চারশ', 'পাঁচশ', 'ছয়শ', 'সাতশ', 'আটশ', 'নয়শ'];
+export const BN_HUNDREDS = [
+	'',
+	'একশ',
+	'দুইশ',
+	'তিনশ',
+	'চারশ',
+	'পাঁচশ',
+	'ছয়শ',
+	'সাতশ',
+	'আটশ',
+	'নয়শ',
+];
 
 function bnBelow1000(n: number): string {
 	const hundreds = Math.floor(n / 100);
@@ -116,11 +127,11 @@ export function integerToBanglaWords(n: bigint): string {
 // ---------------------------------------------------------------------------
 
 // prettier-ignore
-const EN_ONES = [
+export const EN_ONES = [
 	'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
 	'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen',
 ];
-const EN_TENS = [
+export const EN_TENS = [
 	'',
 	'',
 	'Twenty',

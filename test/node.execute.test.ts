@@ -80,6 +80,20 @@ describe('execute: successful operations', () => {
 			{ words: 'One Thousand Two Hundred Thirty Four Taka and Fifty Paisa Only' },
 		],
 		[
+			'parse amount (Bangla words)',
+			{
+				resource: 'number',
+				operation: 'parseAmount',
+				amountText: 'এক লক্ষ পঁচিশ হাজার টাকা পঞ্চাশ পয়সা মাত্র',
+			},
+			{ value: '125000.5', amount: '125000.50', number: 125000.5, taka: '125000', paisa: 50 },
+		],
+		[
+			'parse amount (lakh)',
+			{ resource: 'number', operation: 'parseAmount', amountText: 'Tk 1.5 lakh/-' },
+			{ value: '150000', method: 'words' },
+		],
+		[
 			'number format',
 			{ resource: 'number', operation: 'format', numberValue: '1234567', decimalPlaces: 2 },
 			{ formatted: '12,34,567.00' },
@@ -322,6 +336,18 @@ describe('execute: item handling', () => {
 		expect(out[1].json.error).toMatch(/not a valid Bangladeshi mobile number/);
 		expect(out[1].pairedItem).toEqual({ item: 1 });
 		expect(out[2].json.operator).toBe('Robi');
+	});
+
+	it('reports unreadable amounts per item when continuing on fail', async () => {
+		const node = new BangladeshUtils();
+		const inputs = ['৳১,২০০/-', 'twelve apples', 'দুই কোটি'].map((amountText) => ({
+			json: {},
+			params: { resource: 'number', operation: 'parseAmount', amountText },
+		}));
+		const [out] = await node.execute.call(context(inputs, true));
+		expect(out.map((o) => o.json.value ?? null)).toEqual(['1200', null, '20000000']);
+		expect(out[1].json.error).toMatch(/Unrecognised word "apples"/);
+		expect(out[1].pairedItem).toEqual({ item: 1 });
 	});
 
 	it('rejects unsupported operations', async () => {

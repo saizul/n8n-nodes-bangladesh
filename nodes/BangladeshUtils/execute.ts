@@ -12,6 +12,7 @@ import {
 	lookupDistrict,
 	maskPhone,
 	numberToWords,
+	parseAmount,
 	parsePhone,
 	normalizeText,
 	OPERATORS,
@@ -133,6 +134,10 @@ export function runOperation(
 				suffix: ctx.getNodeParameter('appendSuffix', i, true) as boolean,
 			});
 			return { input, language, words };
+		}
+		case 'number.parseAmount': {
+			const input = ctx.getNodeParameter('amountText', i, '') as string;
+			return { input, ...parseAmount(input) };
 		}
 		case 'number.format': {
 			const input = ctx.getNodeParameter('numberValue', i, '') as string;

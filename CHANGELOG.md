@@ -8,6 +8,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Number: **Parse Amount** operation, the reverse of To Words and Taka Amount in Words. Reads
+  digits with `৳` / `Tk` / `BDT` / `/-`, scale words (`1.5 lakh`, `50k`, `২ কোটি ৫০ লক্ষ`) and
+  whole amounts in Bangla or English words with Taka, Paisa and decimal parts, using exact
+  arithmetic. Returns the exact value, the amount rounded to paisa, a number, Taka and Paisa.
+  Unreadable or ambiguous input is an error instead of a guess.
 - Phone: **Extract From Text** operation. Finds every Bangladeshi mobile number in free text
   (English or Bangla digits, any common spelling), with the original match and offset, operator,
   output format choice, duplicate removal, operator filter and one-item-per-number output.

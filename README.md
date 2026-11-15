@@ -58,6 +58,7 @@ fields into the output.
 |             | WhatsApp Link        | `https://wa.me/8801712345678?text=...`                                           |
 | **Number**  | To Words             | `1234` to "এক হাজার দুইশ চৌত্রিশ" or "One Thousand Two Hundred Thirty Four"      |
 |             | Taka Amount in Words | Cheque style with Taka, Paisa and "মাত্র" / "Only"                               |
+|             | Parse Amount         | `৳১,২৫,০০০/-`, `1.5 lakh`, `২ কোটি` or amounts in words back to a number         |
 |             | Format (Lakh/Crore)  | `1234567.5` to `12,34,567.50`, optional Bangla digits, prefix, suffix            |
 |             | Convert Digits       | `2024` to `২০২৪` and back, inside any text                                       |
 | **Date**    | To Bangla Date       | Gregorian to Bangla calendar with month, weekday and season names                |
@@ -93,6 +94,15 @@ All operations accept Bangla digits (০-৯) in their inputs where numbers are 
   ignored. Amounts are rounded half up to whole paisa.
 - **Words use the South Asian scale** (হাজার, লক্ষ, কোটি / Thousand, Lakh, Crore). Bangla
   words cover every number from 0 to 99 with its own irregular form (for example 69 is ঊনসত্তর).
+- **Parse Amount is the reverse of the word operations.** It reads plain digits (Bangla or
+  English, with `৳`, `Tk`, `BDT` and a closing `/-` or `/=`), digits with scale words (`1.5 lakh`,
+  `50k`, `2.25 crore`, `১.৫লাখ`, `৫ হাজার ২০০`) and whole amounts in Bangla or English words,
+  including Taka and Paisa parts, "দশমিক" / "point", "মাত্র" / "Only" and common alternative
+  spellings (লাখ, লক্ষ, পাঁচশো, দুই শত, বারোশ = 1200, lac, cr). It returns the exact `value`, the
+  `amount` rounded to two decimals, a JavaScript `number`, `taka` and `paisa`, and `method`
+  (`numeric` or `words`). Anything it cannot read, two numbers in a row without a unit, or Paisa
+  outside 0-99 is an error, so a typo never turns into a wrong amount. Whatever Number to Words
+  and Taka Amount in Words write, Parse Amount reads back to the same value.
 - **Bangla calendar** follows the revised calendar of Bangladesh (1987): 1 Boishakh is
   14 April, Boishakh to Ashwin have 31 days, Kartik to Magh and Choitro 30, Falgun 29 days or
   30 in a leap year. Dates without a time zone are used as written; date-times with a zone, JS dates
@@ -170,6 +180,18 @@ Number > Taka Amount in Words, **Number** = `1234.5`:
 | Bangla   | এক হাজার দুইশ চৌত্রিশ টাকা পঞ্চাশ পয়সা মাত্র                  |
 | English  | One Thousand Two Hundred Thirty Four Taka and Fifty Paisa Only |
 
+### Read amounts from invoices, SMS or form fields
+
+Number > Parse Amount, **Amount** = `{{ $json.amount }}`:
+
+| Amount                                        | `value`    | `amount`      |
+| --------------------------------------------- | ---------- | ------------- |
+| `৳১,২৫,০০০/-`                                 | `125000`   | `125000.00`   |
+| `Tk 1.5 lakh`                                 | `150000`   | `150000.00`   |
+| `২ কোটি ৫০ লক্ষ টাকা`                         | `25000000` | `25000000.00` |
+| এক হাজার দুইশ চৌত্রিশ টাকা পঞ্চাশ পয়সা মাত্র | `1234.5`   | `1234.50`     |
+| Twelve Lakh Thirty-Four Thousand Taka Only    | `1234000`  | `1234000.00`  |
+
 ### Lakh/crore formatting with Bangla digits
 
 Number > Format, **Number** = `1234567.5`, **Decimal Places** = `2`, **Output Digits** = Bangla,
@@ -238,8 +260,8 @@ Case, spacing and common older spellings (Comilla, Chittagong, Jessore, Bogra, B
   রবি, টেলিটক), মাঝের অংশ লুকানো, হোয়াটসঅ্যাপ লিংক এবং যেকোনো লেখা (এসএমএস, ইমেইল) থেকে সব মোবাইল নম্বর
   বের করা। বাংলা অঙ্কে লেখা নম্বরও চলে।
 - **সংখ্যা:** সংখ্যা থেকে বাংলা বা ইংরেজি কথায় রূপ (যেমন ১২৩৪ থেকে "এক হাজার দুইশ চৌত্রিশ"),
-  টাকার অঙ্ক কথায় ("... টাকা ... পয়সা মাত্র"), লক্ষ-কোটি হিসাবে কমা বসানো (১২,৩৪,৫৬৭) এবং
-  বাংলা ও ইংরেজি অঙ্কের মধ্যে রূপান্তর।
+  টাকার অঙ্ক কথায় ("... টাকা ... পয়সা মাত্র"), লক্ষ-কোটি হিসাবে কমা বসানো (১২,৩৪,৫৬৭),
+  বাংলা ও ইংরেজি অঙ্কের মধ্যে রূপান্তর এবং কথায় বা "১.৫ লাখ" ধরনে লেখা টাকার অঙ্ক থেকে আবার সংখ্যা বের করা।
 - **তারিখ:** ইংরেজি তারিখ থেকে বাংলা সন, মাস, বার ও ঋতু (সংশোধিত বাংলাদেশ পঞ্জিকা অনুযায়ী,
   ১ বৈশাখ = ১৪ এপ্রিল), এবং বাংলা তারিখ থেকে ইংরেজি তারিখ।
 - **লেখা:** বাংলা লেখা থেকে ইংরেজি হরফে স্লাগ বা প্রতিবর্ণীকরণ (ধ্বনিভিত্তিক, আনুমানিক) এবং
@@ -248,13 +270,14 @@ Case, spacing and common older spellings (Comilla, Chittagong, Jessore, Bogra, B
 
 ### উদাহরণ
 
-| ইনপুট          | অপারেশন              | ফলাফল                                         |
-| -------------- | -------------------- | --------------------------------------------- |
-| `০১৭১২-৩৪৫৬৭৮` | Phone > Normalize    | `+8801712345678`                              |
-| `১২৩৪.৫০`      | Taka Amount in Words | এক হাজার দুইশ চৌত্রিশ টাকা পঞ্চাশ পয়সা মাত্র |
-| `1234567`      | Format (Lakh/Crore)  | `12,34,567` (বাংলা অঙ্কে `১২,৩৪,৫৬৭`)         |
-| `2024-04-14`   | To Bangla Date       | ১ বৈশাখ ১৪৩১                                  |
-| `কুমিল্লা`     | Lookup District      | চট্টগ্রাম বিভাগ                               |
+| ইনপুট                 | অপারেশন              | ফলাফল                                         |
+| --------------------- | -------------------- | --------------------------------------------- |
+| `০১৭১২-৩৪৫৬৭৮`        | Phone > Normalize    | `+8801712345678`                              |
+| `১২৩৪.৫০`             | Taka Amount in Words | এক হাজার দুইশ চৌত্রিশ টাকা পঞ্চাশ পয়সা মাত্র |
+| `২ কোটি ৫০ লক্ষ টাকা` | Parse Amount         | `25000000`                                    |
+| `1234567`             | Format (Lakh/Crore)  | `12,34,567` (বাংলা অঙ্কে `১২,৩৪,৫৬৭`)         |
+| `2024-04-14`          | To Bangla Date       | ১ বৈশাখ ১৪৩১                                  |
+| `কুমিল্লা`            | Lookup District      | চট্টগ্রাম বিভাগ                               |
 
 ## Development
 
